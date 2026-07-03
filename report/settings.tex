@@ -1,0 +1,41 @@
+% !TeX root = main.tex
+\usepackage{fontspec}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{Tinos}}
+\usepackage{polyglossia}
+\setdefaultlanguage{vietnamese}
+\usepackage[a4paper,left=3cm,right=1.5cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{indentfirst}
+\setlength{\parindent}{1.27cm}
+\setlength{\parskip}{6pt}
+\usepackage{graphicx,float,array,longtable,booktabs,multirow,tabularx,caption,amsmath,amssymb,enumitem,xurl,seqsplit,titlesec,tocloft,hyperref,tikz,fancyhdr}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue}
+\emergencystretch=3em
+\sloppy
+\setlist[itemize]{label=-,leftmargin=1.27cm,labelsep=0.5em}
+\setlength{\headheight}{15pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyhead[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
+\captionsetup{font=normalsize,labelfont=normalfont,textfont=normalfont,labelsep=period,justification=centering}
+\captionsetup[table]{name=B?ng,position=top}
+\captionsetup[figure]{name=H?nh,position=bottom}
+\renewcommand{\contentsname}{M?C L?C}
+\renewcommand{\bibname}{T?I LI?U THAM KH?O}
+\titleformat{\chapter}[display]{\centering\bfseries\fontsize{14pt}{16pt}\selectfont}{CH??NG \thechapter.}{0.3cm}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{18pt}
+\titleformat{\section}{\bfseries\fontsize{13pt}{15pt}\selectfont}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\bfseries\itshape\fontsize{13pt}{15pt}\selectfont}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\itshape\fontsize{13pt}{15pt}\selectfont}{\thesubsubsection}{0.5em}{}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\renewcommand{\cftchapfont}{\bfseries\fontsize{12pt}{14pt}\selectfont}
+\renewcommand{\cftchappagefont}{\bfseries\fontsize{12pt}{14pt}\selectfont}
+\renewcommand{\cftchappresnum}{CH??NG~}
+\renewcommand{\cftchapaftersnum}{.}
+\setlength{\cftchapnumwidth}{2.5cm}
+\renewcommand{\cfttoctitlefont}{\hfill\bfseries\fontsize{14pt}{16pt}\selectfont\MakeUppercase}
+\renewcommand{\cftaftertoctitle}{\hfill}

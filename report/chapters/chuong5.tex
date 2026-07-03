@@ -1,0 +1,81 @@
+\chapter{PHÂN TÍCH VÀ ĐÁNH GIÁ KIẾN TRÚC}
+
+Chương 5. PHÂN TÍCH VÀ ĐÁNH GIÁ KIẾN TRÚC
+
+\section{Đánh giá kiến trúc theo các nguyên lý SOLID}
+
+Kiến trúc của dịch vụ N2 được thiết kế tuân thủ các nguyên lý SOLID — bộ năm nguyên tắc nền tảng trong thiết kế hướng đối tượng, giúp mã nguồn dễ bảo trì, dễ mở rộng và giảm thiểu rủi ro khi thay đổi. S – Single Responsibility Principle (Nguyên lý đơn nhiệm): Mỗi controller trong N2 chỉ chịu trách nhiệm cho một nhóm chức năng cụ thể. Ví dụ, CirculationController chỉ xử lý nghiệp vụ mượn/trả/gia hạn, BooksController chỉ làm proxy cho N1, FavoritesController chỉ quản lý sách yêu thích. Sự phân tách này giúp mỗi file có độ dài vừa phải, dễ đọc hiểu và khi cần sửa một chức năng, lập trình viên biết chính xác phải vào file nào. O – Open/Closed Principle (Nguyên lý đóng mở): Hệ thống được thiết kế để “mở cho việc mở rộng, đóng cho việc sửa đổi”. Ví dụ, cơ chế tính phí phạt được tham số hóa thông qua các biến cấu hình (DailyOverdueFine, LightDamageFine, v.v.). Khi muốn thêm một loại phí mới, chỉ cần thêm tham số cấu hình và logic xử lý trong phương thức tính phí mà không cần sửa đổi các phần khác của hệ thống. Tương tự, cơ chế Event Log cho phép thêm consumer mới (ví dụ: một service thống kê mới) mà không cần sửa code của N2. L – Liskov Substitution Principle (Nguyên lý thay thế Liskov): Trong N2, các dependency được inject qua interface (IHttpClientFactory, IConfiguration, DbContext) thay vì khởi tạo trực tiếp. Điều này cho phép thay thế implementation (ví dụ: thay SQL Server bằng SQLite cho development) mà không làm hỏng logic nghiệp vụ. I – Interface Segregation Principle (Nguyên lý phân tách interface): Các contract DTO (BorrowRequest, ReturnRequest, FineCharge, v.v.) được thiết kế nhỏ gọn, mỗi DTO chỉ chứa các trường cần thiết cho một thao tác cụ thể. Không có DTO “vạn năng” chứa tất cả các trường cho mọi tình huống. D – Dependency Inversion Principle (Nguyên lý đảo ngược phụ thuộc): Các module cấp cao (Controller) không phụ thuộc vào module cấp thấp (cụ thể là SQL Server hay HTTP client). Thay vào đó, cả hai cùng phụ thuộc vào abstraction (interface) được đăng ký trong DI container. Điều này được thể hiện rõ qua việc sử dụng IHttpClientFactory thay vì new HttpClient() và DbContext được inject qua constructor thay vì tự khởi
+
+tạo.
+
+\section{Đánh giá các thuộc tính chất lượng}
+
+Kiến trúc phần mềm không chỉ được đánh giá qua tính đúng đắn về mặt chức năng mà còn qua các thuộc tính chất lượng (quality attributes). Dưới đây là phân tích của nhóm về các thuộc tính chất lượng quan trọng của dịch vụ N2.
+
+\subsection{Tính module hóa (Modularity)}
+
+N2 đạt được tính module hóa cao thông qua việc phân tách rõ ràng giữa các tầng (Presentation, API, Business Logic, Data) và giữa các controller. Mỗi module có trách nhiệm được định nghĩa rõ, giao tiếp với nhau qua interface chuẩn. Điều này cho phép:
+
+• Phát triển song song: một thành viên có thể làm việc trên controller mượn sách trong khi thành viên khác phát triển module phí phạt mà không gây xung đột.
+
+• Kiểm thử độc lập: có thể viết unit test cho từng module riêng biệt bằng cách mock các dependency.
+
+• Thay thế linh hoạt: nếu muốn chuyển từ SQL Server sang PostgreSQL, chỉ cần thay đổi provider trong tầng Data, các tầng trên không bị ảnh hưởng.
+
+\subsection{Khả năng mở rộng (Scalability)}
+
+Hệ thống được thiết kế với khả năng mở rộng theo cả hai chiều:
+
+• Scale up (mở rộng dọc): Tăng tài nguyên cho VPS (CPU, RAM) khi lượng người dùng tăng. Do sử dụng ASP.NET Core với xử lý bất đồng bộ (async/await), N2 có thể tận dụng hiệu quả tài nguyên phần cứng.
+
+• Scale out (mở rộng ngang): Nhờ kiến trúc stateless của REST API, N2 có thể được nhân bản thành nhiều instance đứng sau một load balancer. Các instance chia sẻ chung database SQL Server, đảm bảo tính nhất quán dữ liệu.
+
+\subsection{Tính sẵn sàng (Availability)}
+
+Một số cơ chế đảm bảo tính sẵn sàng của N2:
+
+\paragraph{• Docker restart policy (unless‐stopped) đảm bảo container tự động khởi động lại}
+
+nếu gặp sự cố.
+
+• Cơ chế fallback database: nếu không kết nối được SQL Server, hệ thống tự động chuyển sang SQLite để tiếp tục hoạt động (hữu ích trong môi trường development).
+
+• Xử lý lỗi graceful: khi không thể kết nối đến N1 hoặc N3, N2 trả về HTTP 503 với thông báo rõ ràng thay vì crash.
+
+\subsection{Bảo mật (Security)}
+
+Các biện pháp bảo mật được áp dụng trong N2:
+
+• Xác thực JWT: Mọi API endpoint (trừ một số endpoint embed công khai) đều yêu cầu Bearer token hợp lệ. Token được ký bằng shared secret, đảm bảo không thể giả mạo.
+
+• Phân quyền theo role: Các endpoint nhạy cảm như duyệt phiếu mượn, xác nhận trả sách yêu cầu role Librarian hoặc Admin. Người dùng thường (Reader) không thể truy cập các chức năng quản trị.
+
+• Chống truy cập chéo tài khoản: Phương thức CanAccessCardNumberAsync() kiểm tra người dùng hiện tại có quyền thao tác trên mã thẻ được chỉ định hay không, ngăn chặn việc một độc giả truy cập dữ liệu của độc giả khác.
+
+• Double validation token: Ngoài việc kiểm tra chữ ký JWT, N2 còn gọi đến N3 để xác nhận tài khoản vẫn đang active, ngăn chặn trường hợp token chưa hết hạn nhưng tài khoản đã bị khóa.
+
+\subsection{Khả năng kiểm thử (Testability)}
+
+Thiết kế của N2 tạo điều kiện thuận lợi cho kiểm thử:
+
+• Dependency Injection cho phép mock tất cả các phụ thuộc (DbContext, HttpClient, Configuration) trong unit test.
+
+• Business logic được tách khỏi infrastructure (HTTP, database), cho phép kiểm thử logic nghiệp vụ mà không cần kết nối mạng hay cơ sở dữ liệu thật.
+
+• Các hằng số cấu hình (DefaultBorrowDays, DefaultBorrowPricePerBook) được định nghĩa tập trung, dễ dàng thay đổi trong quá trình kiểm thử.
+
+\section{So sánh với các phương án thay thế}
+
+Trong quá trình thiết kế, nhóm đã cân nhắc một số phương án thay thế và đưa ra quyết định dựa trên phân tích ưu nhược điểm:
+
+Bảng 5.1 Phân tích các quyết định kiến trúc (Architecture Decision Records)
+
+Quyết định Phương án đã chọn Phương án thay Lý do lựa chọn thế Giao tiếp liên REST API đồng bộ gRPC, Message REST đơn giản, dễ service Queue (RabbitMQ) debug, phù hợp trình độ nhóm, được HTTP client của .NET hỗ trợ tốt Cơ chế Event Published Event Message Broker Không cần cài đặt Logs (pull) (push) thêm infrastructure, dễ triển khai, phù hợp quy mô nhỏ Cơ sở dữ liệu SQL Server + PostgreSQL, SQL Server là yêu SQLite fallback MySQL, thuần cầu của đề bài, SQLite SQLite cho development convenience ORM Entity Framework Dapper, ADO.NET EF Core giảm Core thuần boilerplate code, hỗ trợ migration, LINQ mạnh mẽ Xác thực JWT Bearer Token OAuth2, JWT stateless, phù Session-based hợp microservices, được ASP.NET Core hỗ trợ sẵn
+
+\paragraph{Frontend Vue 3 + Vuetify/Ant React, Angular, Vue 3 nhẹ, dễ học,}
+
+framework Design Blazor Vuetify và Ant Design cung cấp sẵn component đẹp API Gateway Ocelot (trên VPS Nginx, Kong, Ocelot tích hợp tốt chung) Traefik với .NET ecosystem, cấu hình đơn giản qua JSON
+
+\section{Bài học kinh nghiệm}
+
+Qua quá trình thiết kế và triển khai dịch vụ N2, nhóm đã rút ra một số bài học quan trọng: Về thiết kế API Contract: Việc thống nhất API Contract giữa ba nhóm ngay từ đầu là yếu tố sống còn. Mọi thay đổi contract sau khi đã triển khai đều gây ra gián đoạn và yêu cầu cập nhật đồng bộ ở nhiều nơi. Nhóm khuyến nghị sử dụng công cụ như OpenAPI Generator hoặc Swagger Codegen để tự động sinh client code từ spec, giảm thiểu lỗi do sai lệch contract. Về quản lý dữ liệu phân tán: Mô hình Database per Service mang lại sự độc lập nhưng cũng tạo ra thách thức về tính nhất quán dữ liệu. Việc cache dữ liệu từ service khác (ví dụ: N2 cache thông tin sách từ N1) dẫn đến nguy cơ stale data. Trong tương lai, cần bổ sung cơ chế cache invalidation hoặc sử dụng event-driven update để giảm thiểu vấn đề này. Về xử lý lỗi liên service: Khi một service gọi sang service khác, luôn có khả năng service đó không khả dụng. Hiện tại, N2 xử lý bằng cách bắt exception và trả về lỗi 503. Tuy nhiên, pattern Circuit Breaker (ví dụ: qua thư viện Polly) sẽ giúp hệ thống “cắt cầu dao” tạm thời khi một service liên tục thất bại, tránh lãng phí tài nguyên cho các lần thử lại vô ích. Về logging và debug: Trong môi trường microservices, việc trace một request qua nhiều service là thách thức lớn. Middleware ghi log mỗi request của N2 là bước khởi đầu tốt, nhưng để debug hiệu quả, cần bổ sung distributed tracing (ví dụ: OpenTelemetry) với correlation ID xuyên suốt các service. Về đánh đổi giữa đơn giản và hoàn hảo: Là sinh viên với thời gian hạn chế, nhóm đã phải liên tục cân bằng giữa việc “làm đúng chuẩn” và “làm kịp deadline”. Nhiều quyết định (như dùng Published Event Logs thay vì Message Broker, hay deploy thủ công thay vì CI/CD pipeline) là sự đánh đổi có ý thức để đảm bảo tiến độ. Đây là bài học thực tế quý giá về quản lý dự án phần mềm mà không sách vở nào dạy được.
